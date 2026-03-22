@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-STEP 8: MODEL VALIDATION SCRIPT
+MODEL VALIDATION SCRIPT
 ═══════════════════════════════════════════════════════════════════════
 Purpose: 
     Validate star schema design against CSV data files
-    Run this BEFORE uploading to S3 (Phase 2)
+    Run this BEFORE uploading to S3
 
 Key Design Principles:
     • Referential Integrity validation
@@ -20,7 +20,8 @@ Important ERP Note:
     against plants['PLANT_ID'] intentionally.
 
 Output:
-    outputs/profiling_results/validation_results.md 
+    outputs/profiling_results/validation_results.md
+
 ═══════════════════════════════════════════════════════════════════════
 """
 
@@ -31,7 +32,7 @@ from datetime import datetime
 
 # Paths
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent.parent
+PROJECT_ROOT = SCRIPT_DIR.parent
 
 DATA_DIR = PROJECT_ROOT /  "raw"
 ORDER_DIR = DATA_DIR / "orders_erp"
@@ -62,7 +63,7 @@ def log_test(category, test_name, status, count, notes=""):
     )
 
 print("=" * 80)
-print("STEP 8: MODEL VALIDATION")
+print("Validation Results")
 print("=" * 80)
 print(f"Started: {datetime.now()}\n")
 
@@ -337,7 +338,7 @@ print(f"\n{verdict}\n")
 output_file = OUTPUT_DIR / 'validation_results.md'
 
 with open(output_file, 'w', encoding="utf-8") as f:
-    f.write("# Step 8 Validation Results\n\n")
+    f.write("# Validation Results\n\n")
     f.write(f"Generated: {datetime.now()}\n\n")
     f.write(f"## Overall Status\n{verdict}\n\n")
     f.write("## Detailed Results\n\n")

@@ -1,6 +1,6 @@
 # Phase 1 — Raw Data Profiling: Orders_ERP (2022)
 
-**Generated:** 2026-03-11 23:40:04  
+**Generated:** 2026-03-23 00:39:02  
 **Source table:** `Orders_ERP_2022.csv`  
 **Script:** `profile_orders_erp.py`
 
@@ -70,35 +70,23 @@ Memory usage:
 STEP 2 — SAMPLE ROWS
 --------------------------------------------------------------------------------
 
-First 5 rows:
-   ERP_EXPORT_ROW_ID ORDER_LINE_ID         ORDER_NO   SO_NUMBER  ORDER_LINE_NO  ... ORDER_STATUS  ORDER_YEAR CANCEL_REASON  RETURN_REASON RMA_NO
-0  ERP20220000000090    OL00000060  ORD-2022-000060  SO00000060             10  ...  Unfulfilled        2022           NaN            NaN    NaN
-1  ERP20220000000231    OL00000140  ORD-2022-000140  SO00000140             10  ...  Unfulfilled        2022           NaN            NaN    NaN
-2  ERP20220000000304    OL00000177  ORD-2022-000177  SO00000177             10  ...  Unfulfilled        2022           NaN            NaN    NaN
-3  ERP20220000000627    OL00000364  ORD-2022-000364  SO00000364             10  ...  Unfulfilled        2022           NaN            NaN    NaN
-4  ERP20220000000699    OL00000405  ORD-2022-000405  SO00000405             10  ...  Unfulfilled        2022           NaN            NaN    NaN
+First 5 rows (selected columns):
+| ERP_EXPORT_ROW_ID   | ORDER_LINE_ID   | ORDER_NO        |   ORDER_LINE_NO | CUSTOMER_ID   |   PRODUCT_ID |   PLANT_CODE |   BATCH_ID | ORDER_DATE          | EXPECTED_DELIVERY_DATE   |   ACTUAL_DELIVERY_DATE |   INVOICE_DATE |   ORDER_QTY |   DELIVERY_QTY |   INVOICE_QTY | ORDER_STATUS   |
+|:--------------------|:----------------|:----------------|----------------:|:--------------|-------------:|-------------:|-----------:|:--------------------|:-------------------------|-----------------------:|---------------:|------------:|---------------:|--------------:|:---------------|
+| ERP20220000000090   | OL00000060      | ORD-2022-000060 |              10 | CUST02235     |       100373 |         1047 |        nan | 2022-01-01T00:00:00 | 2022-01-10T00:00:00      |                    nan |            nan |         600 |              0 |             0 | Unfulfilled    |
+| ERP20220000000231   | OL00000140      | ORD-2022-000140 |              10 | CUST01758     |       100336 |         1045 |        nan | 2022-01-01T00:00:00 | 2022-01-10T00:00:00      |                    nan |            nan |          84 |              0 |             0 | Unfulfilled    |
+| ERP20220000000304   | OL00000177      | ORD-2022-000177 |              10 | CUST01649     |       100556 |         1014 |        nan | 2022-01-01T00:00:00 | 2022-01-10T00:00:00      |                    nan |            nan |          25 |              0 |             0 | Unfulfilled    |
+| ERP20220000000627   | OL00000364      | ORD-2022-000364 |              10 | CUST00352     |       100106 |         1042 |        nan | 2022-01-01T00:00:00 | 2022-01-07T00:00:00      |                    nan |            nan |          40 |              0 |             0 | Unfulfilled    |
+| ERP20220000000699   | OL00000405      | ORD-2022-000405 |              10 | CUST01122     |       100116 |         1009 |        nan | 2022-01-01T00:00:00 | 2022-01-08T00:00:00      |                    nan |            nan |         930 |              0 |             0 | Unfulfilled    |
 
-[5 rows x 42 columns]
-
-Last 5 rows:
-        ERP_EXPORT_ROW_ID ORDER_LINE_ID         ORDER_NO   SO_NUMBER  ORDER_LINE_NO  ... ORDER_STATUS  ORDER_YEAR CANCEL_REASON  RETURN_REASON RMA_NO
-760042  ERP20220000759925    OL00244963  ORD-2022-244963  SO00244963             10  ...    Completed        2022           NaN            NaN    NaN
-760043  ERP20220000759926    OL00244963  ORD-2022-244963  SO00244963             10  ...    Completed        2022           NaN            NaN    NaN
-760044  ERP20220000759952    OL00244971  ORD-2022-244971  SO00244971             10  ...    Completed        2022           NaN            NaN    NaN
-760045  ERP20220000759953    OL00244971  ORD-2022-244971  SO00244971             10  ...    Completed        2022           NaN            NaN    NaN
-760046  ERP20220000759954    OL00244971  ORD-2022-244971  SO00244971             10  ...    Completed        2022           NaN            NaN    NaN
-
-[5 rows x 42 columns]
-
-Random sample (5 rows):
-        ERP_EXPORT_ROW_ID ORDER_LINE_ID         ORDER_NO   SO_NUMBER  ORDER_LINE_NO  ... ORDER_STATUS  ORDER_YEAR CANCEL_REASON  RETURN_REASON RMA_NO
-186898  ERP20220000151132    OL00059468  ORD-2022-059468  SO00059468             10  ...    Completed        2022           NaN            NaN    NaN
-367090  ERP20220000389664    OL00134466  ORD-2022-134466  SO00134466             10  ...    Completed        2022           NaN            NaN    NaN
-162588  ERP20220000201570    OL00075733  ORD-2022-075733  SO00075733             10  ...    Completed        2022           NaN            NaN    NaN
-156391  ERP20220000142543    OL00056755  ORD-2022-056755  SO00056755             10  ...    Completed        2022           NaN            NaN    NaN
-590378  ERP20220000558340    OL00185611  ORD-2022-185611  SO00185611             10  ...    Completed        2022           NaN            NaN    NaN
-
-[5 rows x 42 columns]
+Random sample (5 rows, selected columns):
+| ERP_EXPORT_ROW_ID   | ORDER_LINE_ID   | ORDER_NO        |   ORDER_LINE_NO | CUSTOMER_ID   |   PRODUCT_ID |   PLANT_CODE | BATCH_ID                             | ORDER_DATE          | EXPECTED_DELIVERY_DATE   | ACTUAL_DELIVERY_DATE   | INVOICE_DATE        |   ORDER_QTY |   DELIVERY_QTY |   INVOICE_QTY | ORDER_STATUS   |
+|:--------------------|:----------------|:----------------|----------------:|:--------------|-------------:|-------------:|:-------------------------------------|:--------------------|:-------------------------|:-----------------------|:--------------------|------------:|---------------:|--------------:|:---------------|
+| ERP20220000151132   | OL00059468      | ORD-2022-059468 |              10 | CUST02380     |       100150 |         1034 | BTC-20220302-100150-MFG0006-5808C502 | 2022-04-24T00:00:00 | 2022-04-30T00:00:00      | 2022-04-30T00:00:00    | 2022-05-03T00:00:00 |         240 |            120 |           120 | Completed      |
+| ERP20220000389664   | OL00134466      | ORD-2022-134466 |              10 | CUST00967     |       100320 |         1019 | nan                                  | 2022-07-10T00:00:00 | 2022-07-20T00:00:00      | nan                    | nan                 |         120 |              0 |             0 | Completed      |
+| ERP20220000201570   | OL00075733      | ORD-2022-075733 |              10 | CUST01579     |       100036 |         1020 | BTC-20220103-100036-MFG0001-61D58C83 | 2022-04-12T00:00:00 | 2022-04-21T00:00:00      | 2022-04-21T00:00:00    | 2022-04-25T00:00:00 |         108 |             54 |            54 | Completed      |
+| ERP20220000142543   | OL00056755      | ORD-2022-056755 |              10 | CUST00505     |       100445 |         1052 | nan                                  | 2022-04-10T00:00:00 | 2022-04-15T00:00:00      | nan                    | nan                 |         495 |              0 |             0 | Completed      |
+| ERP20220000558340   | OL00185611      | ORD-2022-185611 |              10 | CUST00862     |       100515 |         1039 | BTC-20220706-100515-MFG0003-048E9E4C | 2022-10-23T00:00:00 | 2022-10-24T00:00:00      | 2022-10-24T00:00:00    | 2022-10-29T00:00:00 |        1020 |            487 |           487 | Completed      |
 
 STEP 3 — GRAIN EXPLORATION
 --------------------------------------------------------------------------------

@@ -1,77 +1,126 @@
 # Pharma Supply Chain Data Platform
 
-Event-Level Dimensional Warehouse on AWS | 4M+ Supply Chain Records (2022–2025)
+**Batch Data Pipeline on AWS — 4.7M supply chain records across 11 tables (2022–2025)**  
+Schema-enforced transformation from raw ERP CSVs to analytics-ready, partitioned Parquet.
+
+> Raw ERP exports → typed, validated, partitioned Parquet for analytics
 
 ---
 
-## Problem Statement
+![Pharma Supply Chain Data Platform Architecture](architecture/aws_architecture.png)
 
-Pharmaceutical distribution involves multiple plants, customer accounts, and product SKUs operating across several fiscal years.
-Operational ERP exports — including orders, inventory movements, product batches, and allocation logs — are generated independently. Without structured integration, cross-functional analysis across fulfillment, inventory reconciliation, and demand tracking becomes difficult.
-
-This platform consolidates four years of historical supply chain data (2022–2025) into an analytics-ready warehouse on AWS, enabling reliable answers to questions such as:
-
-- Which product batches are nearing expiry across specific plants?
-- Where does planned batch allocation differ from actual inventory movement?
-- Which customers are being fulfilled by secondary or alternate plants?
-- How does order fulfillment performance vary by therapeutic segment and formulation?
-- Where do distribution network imbalances exist between central and regional plants based on allocation, movement, and fulfillment patterns?
-
-The focus of this project is the data engineering foundation — data modeling, transformation pipelines, and orchestration — required to make these analyses repeatable and scalable.
+This diagram shows the end-to-end batch data pipeline on AWS, where raw ERP CSV exports are ingested into S3, transformed using AWS Glue with strict data quality enforcement, and stored as partitioned Parquet datasets for analytics via Amazon Athena and Redshift.
 
 ---
 
-# Data Domain
+## What This Pipeline Does
 
-## Business Context
+Pharmaceutical ERP systems export orders, inventory movements, batch allocations, and product data as raw CSVs — independently, with no schema enforcement. This platform ingests four years of that data, enforces a strict quality contract during transformation, and loads it into a queryable warehouse layer.
 
-This platform models the distribution network of a pharmaceutical company operating across 57 distribution plants and serving 2,500+ retail stores / distributor accounts with a catalog of 702 product SKUs.
-
-Order fulfillment is governed by a customer–plant routing framework (primary, secondary, backup). Routing decisions vary based on allocation and availability, meaning fulfillment is not tied to a fixed plant.
-
-Batch traceability connects every inventory movement and order fulfillment event back to the originating manufacturing batch and its associated manufacturer, enabling end-to-end product lineage across the network.
+The engineering focus is on **correctness and reliability** — schema enforcement, fail-fast quality gates, forensic error reporting, and dependency-aware job execution.
 
 ---
 
-## Data Model Overview
+## Engineering Highlights
 
-The platform follows a dimensional modeling approach with explicitly defined grain across all entities.  
+- **Fail-fast quality gates**
+  - PK violations, schema mismatches, and date parse failures abort execution
+  - Forensic reject sets written to S3 before any output is committed
 
-Fact tables are stored at event-level granularity — no pre-aggregations are persisted in the warehouse layer.
+- **Explicit schema enforcement**
+  - All 11 tables defined using PySpark `StructType`
+  - No reliance on crawler-based inference
 
----
+- **Job isolation**
+  - Orders (~3.6M rows) processed in a separate job
+  - Prevents high-volume failures from blocking other datasets
 
-## Dimensional Layer — Master Entities
+- **Dependency-aware execution**
+  - Dimensions processed before dependent facts
+  - Avoids partial warehouse states
 
-| Table | Rows | Grain | Role |
-|---|---|---|---|
-| `customers` | 2,500 | One row per customer account | Retail store / distributor master (surrogate + business key) |
-| `plant_warehouse` | 57 | One row per plant | Distribution network master (central + regional) |
-| `products_master` | 702 | One row per SKU | Product catalog (formulation, HSN, GST, classification) |
-| `manufacturers` | 10 | One row per manufacturer | Licensed manufacturer registry |
-| `products_annual_demand` | 702 | One row per SKU | Baseline annual demand planning assumption |
+- **Concurrent run guard**
+  - S3 run markers prevent overlapping writes
 
----
-
-## Bridge / Relationship Tables
-
-| Table | Rows | Grain | Role |
-|---|---|---|---|
-| `customer_plant_mapping` | 3,384 | One row per (customer × plant) | Defines routing priority (primary / secondary / backup) |
-| `product_manufacturer_bridge` | 702 | One row per (product × manufacturer) | Defines which manufacturer produces which product |
+- **Partition-aware writes**
+  - Only affected partitions are overwritten during re-runs
 
 ---
 
-## Transactional / Fact Layer — Event Data (2022–2025)
+## Data Scale
 
-| Table | Rows | Grain | Role |
-|---|---|---|---|
-| `product_batches` | 23,658 | One row per manufacturing batch (lot) | Batch master with manufacture date, expiry date, and produced quantity |
-| `batch_allocator_central` | 94,306 | One row per (batch × plant × allocation date) | Planned distribution allocation |
-| `inventory_movements` | 1,042,914 | One row per inventory movement event | Physical stock movement between plants |
-| `orders_erp` | 3,596,681 | One row per order line event | ERP order transactions with fulfillment outcome |
-
+| | |
+|---|---|
+| Total records | ~4.7M across 11 tables |
+| Orders | 3.6M rows · partitioned by year / month |
+| Inventory movements | ~1M rows · partitioned by year |
+| Time range | 2022–2025 (4 years) |
+| Plants | 57 distribution nodes |
+| Customers | 2,500+ retail / distributor accounts |
+| Products | 702 SKUs across therapeutic segments |
 
 ---
 
+## Pipeline Stages
 
+### Phase 1 — Data Profiling
+Analyzed all source tables using PySpark — nulls, duplicates, grain validation, key structure, and schema inconsistencies. Findings drove every downstream design decision.
+
+### Phase 2 — Raw Ingestion
+CSV data loaded into S3 without transformation. Fact tables partitioned by year (and month for orders) at ingestion time to scope downstream processing.
+
+### Phase 3 — Schema & Catalog Contract
+Explicit target schemas defined for all 11 tables based on profiling. Glue Catalog used for metadata and partition discovery — not as schema authority.
+
+### Phase 4 — ETL Transformation (Silver Layer)
+Two Glue PySpark jobs transform raw CSV into typed, validated Parquet:
+
+- **`etl_orders.py`** — orders fact table; single-pass PK aggregation; enum normalization; forensic reject output
+- **`etl_multi_table.py`** — 7 dimensions then 3 facts; atomic commit protocol; concurrent run guard
+
+### Phase 5 — Orchestration
+AWS Step Functions coordinates the two Glue jobs with retry logic and failure notification. Implemented to demonstrate dependency management and failure handling — the same pattern supports incremental pipelines in production.
+
+### Phase 6 — Warehouse Load
+Curated Parquet datasets will be loaded into Amazon Redshift to support analytical workloads.
+
+---
+
+## Data Model
+
+Star schema · event-level granularity · no pre-aggregated tables
+
+| Layer | Tables |
+|---|---|
+| Dimensions | customers · plant\_warehouse · products\_master · manufacturers · products\_annual\_demand |
+| Bridge | customer\_plant\_mapping · product\_manufacturer\_bridge |
+| Facts | orders\_erp · inventory\_movements · batch\_allocator\_central · product\_batches |
+
+**Key modeling decision — orders grain**
+
+`orders_erp` is stored at ERP export event level, not order line level. `ORDER_LINE_ID` repeats across lifecycle states (ordered → delivered → invoiced → returned). The physical PK is `ERP_EXPORT_ROW_ID`.
+
+This preserves the full order lifecycle and enables return pattern and fulfillment timeline analysis. Aggregating quantities requires filtering by `line_status` — documented in the schema contract.
+
+---
+
+## Tech Stack
+
+| | |
+|---|---|
+| Storage | Amazon S3 |
+| Compute | AWS Glue (PySpark) |
+| Orchestration | AWS Step Functions |
+| Metadata | AWS Glue Data Catalog |
+| Warehouse | Amazon Redshift (target layer) |
+| Query | Amazon Athena |
+| Format | Parquet · Snappy compression |
+| Language | Python 3.10 |
+
+---
+
+## Data & Security Notes
+
+- No real pharmaceutical data is included in this repository
+- Source datasets in private S3 buckets
+- Configuration files are templates only (no credentials or sensitive information)
